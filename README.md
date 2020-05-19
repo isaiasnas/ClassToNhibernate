@@ -1,8 +1,4 @@
-## initially NHibernate
-
-# Projeto - C # class generator, about MSSQL table structure
-
-## SKD - 1.17.1
+# Projeto - C # gerador de estrutura lógica
 
 ### Versão inicial do projeto.
 
