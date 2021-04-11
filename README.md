@@ -7,6 +7,7 @@
 Gerador de class para utilização **NHIBERNATE**,  ...
 [documentação](https://github.com/isaiasnas/ClassToNhibernate/blob/master/README.md)
 
+## Configuração
 ```csharp
     internal class InitConfig
     {
@@ -111,10 +112,25 @@ Gerador de class para utilização **NHIBERNATE**,  ...
     }
 ```
 
+## Geração de classes
+```csharp
+  private static void Configuracao()
+        {
+            var tables = InitConfig.GetTables();
+            var configs = InitConfig.GetConfigs();
+
+            var classTable = string.Join(Environment.NewLine, tables);
+            var classConfig = string.Join(Environment.NewLine, configs);
+
+            InitConfig.Config();
+            Unit = UnitOfWork.Make(InitConfig.KEY);
+        }
+```
 ## Histórico
 
 Versão | Status | Data
 ----------|--------|-------------
+0.0.2 | beta | 2021/04/10
 0.0.1 | beta | 2020/05/18
 0.0.0 | beta | 2019/09/20
 
