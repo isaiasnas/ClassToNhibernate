@@ -1,15 +1,16 @@
 IF OBJECT_ID('[dbo].[create_class_config_nhibernate]') IS NOT NULL DROP PROCEDURE [dbo].[create_class_config_nhibernate];
 GO
 
-CREATE PROCEDURE [dbo].[create_class_config_nhibernate](@tabela SYSNAME)  
+CREATE PROCEDURE [dbo].[create_class_config_nhibernate](@tabela SYSNAME, @tabelaAlias VARCHAR(50) = '')  
 AS  
     BEGIN  
         DECLARE @TableName SYSNAME= @tabela;  
+		DECLARE @ALIAS VARCHAR(50)= case when @tabelaAlias='' then @TableName else @tabelaAlias end;
         DECLARE @ClassBase VARCHAR(100)= 'DtoBase<' + @TableName + '>';  
         DECLARE @Result VARCHAR(MAX)= '';  
-        SELECT @Result = @Result + 'internal class ' + @TableName + 'Config : ConfigBase<' + @TableName + '>  
+        SELECT @Result = @Result + 'internal class ' + @ALIAS + 'Config : ConfigBase<' + @ALIAS + '> , IEasyDataAccess  
 {  
-	public ' + @TableName + 'Config() : base("'+ @TableName +'") { }
+	public ' + @ALIAS + 'Config() : base("'+ @TableName +'") { }
 
 	protected override void Setup()
     {';  
@@ -25,7 +26,7 @@ AS
         ) t;  
         --//Id(m => m.{});'  
         SELECT @Result = @Result + '  
-	Map(m => m.' + ColumnName + ').Column("'+ ColumnName +'")'+NameSql+MaxL+Number+';'  
+	Cl(m => m.' + ColumnName + ').Column("'+ ColumnName +'")'+NameSql+MaxL+Number+';'  
         FROM  
         (  
             SELECT replace(col.name, ' ', '_') ColumnName,   
