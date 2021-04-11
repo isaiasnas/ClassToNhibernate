@@ -7,6 +7,40 @@
 Gerador de class para utilização **NHIBERNATE**,  ...
 [documentação](https://github.com/isaiasnas/ClassToNhibernate/blob/master/README.md)
 
+## Map
+```csharp
+internal class ConfigTable
+{
+    public string Table { get; set; }
+    public string Classe { get; set; }
+    public bool Dominio { get; set; }
+    public ConfigTable(string table, string classe, bool dominio = false)
+    {
+        Table = table;
+        Classe = classe;
+        Dominio = dominio;
+    }
+}
+
+internal static class MapTables
+{
+    static internal IList<ConfigTable> Tables = new List<ConfigTable> {
+        new ConfigTable("Filho","ProdutoVenda",true),
+        new ConfigTable("EntIt","ItemEntrega",true),
+        new ConfigTable("ElEnt","ElaboracaoEntrega",true),
+        new ConfigTable("Depos","Empresa",true),
+        new ConfigTable("PdVen","PedidoVenda",true),
+        new ConfigTable("Clien","Cliente",true),
+        new ConfigTable("EndCl","EnderecoCliente",true),
+        new ConfigTable("PdIte","ItemPedido",true),
+        new ConfigTable("Produ","Produto",true),
+        new ConfigTable("tbConta","Conta",true),
+        new ConfigTable("Roman","Romaneio"),
+        new ConfigTable("Motor","Motororista")
+    }
+}
+```
+
 ## Configuração
 ```csharp
 public class Config
