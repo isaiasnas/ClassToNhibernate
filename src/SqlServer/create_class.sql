@@ -2,13 +2,14 @@ IF OBJECT_ID('[dbo].[create_class]') IS NOT NULL DROP PROCEDURE [dbo].[create_cl
 GO
 
 CREATE PROCEDURE [dbo].[create_class]
-(@tabela        SYSNAME, 
+(@tabela        SYSNAME,
  @serializacao  BIT          = 0, 
  @comentario    BIT          = 0, 
  @override      BIT          = 0, 
  @overrideFull  BIT          = 0, 
  @generic       BIT          = 0, 
- @baseClassName VARCHAR(500) = ''
+ @baseClassName VARCHAR(500) = '',
+ @tabelaAlias   VARCHAR(50)  = ''
 )
 AS
     BEGIN
@@ -23,15 +24,17 @@ AS
                 PRINT '5- @@overrideFull<BIT>:= [1|0] 1:caso queira sobeescrever métodos [Equals|GetHashCode|ToString] detalhado,0:suprime';
                 PRINT '6- @generic<BIT>:= [1|0] 1:caso queira usar uma classe base de forma generica,0:suprime';
                 PRINT '7- @baseClassName<VARCHAR(500)>:= caso [@generic=1] e valor passado usa classe generica, caso [@generic=0] e valor passado usa somente classe passada';
+                PRINT '8- @tabelaAlias<VARCHAR(500)>:= caso valor informado será o nome do objeto referente a TABELA';
                 RETURN;
         END;
         DECLARE @TableName SYSNAME= @tabela;
+		DECLARE @ALIAS VARCHAR(50)= case when @tabelaAlias='' then @TableName else @tabelaAlias end;
         DECLARE @ClassBase VARCHAR(MAX);
         IF @generic = 1
            AND @baseClassName IS NOT NULL
            AND LEN(@baseClassName) > 0
             BEGIN
-                SET @ClassBase = '' + @baseClassName + '<' + @TableName + '>';
+                SET @ClassBase = '' + @baseClassName + '<' + @ALIAS + '>';
         END;
         IF @generic = 0
            AND @baseClassName IS NOT NULL
@@ -68,8 +71,7 @@ AS
 /// </summary>'
                                        ELSE+CASE
                                                 WHEN @serializacao = 1
-                                                THEN '          
-[Serializable]'
+                                                THEN ''
                                                 ELSE ''
                                             END
                                    END + CASE
@@ -78,7 +80,7 @@ AS
 [Serializable]'
                                              ELSE ''
                                          END + '           
-public class ' + @TableName + ' ' + CASE
+public class ' + @ALIAS + ' ' + CASE
                                         WHEN(@ClassBase IS NULL
                                              OR @ClassBase = '')
                                         THEN ''
@@ -183,12 +185,12 @@ public class ' + @TableName + ' ' + CASE
     /// </summary>'
          ELSE ''
      END + '       
-	public override bool Equals(object obj) => Equals(obj as ' + @tabela + ');
+	public override bool Equals(object obj) => Equals(obj as ' + @ALIAS + ');
       
 	/// <summary>              
     /// Verificação interna de igualdade()          
     /// </summary>  
-	private bool Equals(' + @tabela + ' o)          
+	private bool Equals(' + @ALIAS + ' o)          
 	{          
 		if (ReferenceEquals(this, o)) return true;  
         if (ReferenceEquals(null, o)) return false;  
