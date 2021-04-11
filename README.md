@@ -9,38 +9,65 @@ Gerador de class para utilização **NHIBERNATE**,  ...
 
 ## Configuração
 ```csharp
-internal class InitConfig
+public class Config
 {
-    static internal IDictionary<string,string> _tables = new Dictionary<string, string> {
-        { "Tabela","Alias" },
-    };
-    static string _stringConnection = $";";
+    const string TEMPLATE_CLASS = @"using EasyInfo.DataAccess;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-    public static IEnumerable<string> GetTables()
+namespace {0}
+{{
+{1}
+}}";
+
+    const string TEMPLATE_CLASS_CONFIG = @"using EasyInfo.DataAccess;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+//referência de entidade
+using {2};
+
+namespace {0}
+{{
+{1}
+}}";
+
+    static string _stringConnection = $"server={0};initial catalog={1};user id={2};password={3};";
+
+    public static IEnumerable<string> GetTables(string @namespace = "", string dir = "")
     {
         try
         {
-            IList<string> tables = new List<string>();
+            IList<string> @collection = new List<string>();
             using (var connection = new SqlConnection(_stringConnection))
             {
-                foreach (var table in _tables)
+                foreach (var table in MapTables.Tables)
                 {
-                    var query = connection.ExecuteScalar<string>("create_class",
+                    var @class = connection.ExecuteScalar<string>("create_class",
                         new
                         {
-                            @tabela = table.Key,
+                            @tabela = table.Table,
                             @serializacao = 1,
-                            @comentario = 0,
+                            @comentario = 1,
                             @override = 1,
                             @overrideFull = 0,
                             @generic = 1,
                             @baseClassName = "DbDtoBase",
-                            @tabelaAlias = table.Value
+                            @tabelaAlias = table.Classe
                         }, commandType: CommandType.StoredProcedure);
-                    tables.Add(query);
+                    @collection.Add(@class);
+
+
+                    TablesToClass(table.Classe, @class?.Trim(), @namespace, dir);
+
                 }
             }
-            return tables;
+            return @collection;
         }
         catch
         {
@@ -48,25 +75,72 @@ internal class InitConfig
         }
     }
 
-    public static IEnumerable<string> GetConfigs()
+    public static bool MakeEntities(string @namespace = "", string dir = "")
     {
         try
         {
-            IList<string> tables = new List<string>();
+            GetTables(@namespace, dir);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return default(bool);
+        }
+    }
+
+    public static bool MakeRepositories(string @namespace,string @namespaceEntity, string dir)
+    {
+        try
+        {
+            GetConfigs(@namespace, @namespaceEntity, dir);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return default(bool);
+        }
+    }
+
+
+    static void TablesToClass(string @className, string @class, string @namespace, string dir, bool config = false,string @namespaceEntity="")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(@namespace) || string.IsNullOrWhiteSpace(dir)) return;
+
+            var file = System.IO.Path.Combine(dir, $"{@className}{(config?"ConfigRepo":"")}.cs");
+            var template = !config?
+                string.Format(TEMPLATE_CLASS, @namespace, @class):
+                string.Format(TEMPLATE_CLASS_CONFIG, @namespace, @class, @namespaceEntity);
+            System.IO.File.WriteAllText(file, template);
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    public static IEnumerable<string> GetConfigs(string @namespace ,string @namespaceEntity, string dir)
+    {
+        try
+        {
+            IList<string> @collection = new List<string>();
             using (var connection = new SqlConnection(_stringConnection))
             {
-                foreach (var table in _tables)
+                foreach (var table in MapTables.Tables)
                 {
-                    var query = connection.ExecuteScalar<string>("create_class_config_nhibernate",
+                    var @class = connection.ExecuteScalar<string>("create_class_config_nhibernate",
                         new
                         {
-                            @tabela = table.Key,
-                            @tabelaAlias = table.Value
+                            @tabela = table.Table,
+                            @tabelaAlias = table.Classe,
+                            @dominio = table.Dominio
                         }, commandType: CommandType.StoredProcedure);
-                    tables.Add(query);
+                    @collection.Add(@class);
+
+                    TablesToClass(table.Classe, @class?.Trim(), @namespace, dir, true, @namespaceEntity);
                 }
             }
-            return tables;
+            return @collection;
         }
         catch
         {
@@ -76,7 +150,7 @@ internal class InitConfig
 
     public static string KEY = @"CONNECTION-DEFAULT";
 
-    public static void Config()
+    public static void Init()
     {
         try
         {
@@ -86,7 +160,7 @@ internal class InitConfig
                 FormatSql = true,
                 ShowSql = true,
                 Nome = KEY,
-                Namespace = "namespace.root",
+                Namespace = "assembly.root",
                 Assembly = Assembly.GetExecutingAssembly(),
                 Provider = Provider.SqlServer2008,
                 ConnectionString = _stringConnection,
@@ -114,16 +188,35 @@ internal class InitConfig
 
 ## Geração de classes
 ```csharp
-private static void Configuracao()
+[TestFixture]
+public class InitTeste
 {
-    var tables = InitConfig.GetTables();
-    var configs = InitConfig.GetConfigs();
+    protected UnitOfWork Unit;
 
-    var classTable = string.Join(Environment.NewLine, tables);
-    var classConfig = string.Join(Environment.NewLine, configs);
+    [TestCase, Order(1)]
+    public void CriacaoDeEntidades()
+    {
+        var execute = Util.Config.MakeEntities("","");
+        Assert.IsTrue(execute, "<ERROR>");
+    }
 
-    InitConfig.Config();
-    Unit = UnitOfWork.Make(InitConfig.KEY);
+    [TestCase,Order(2)]
+    public void CriacaoDeRepositorio()
+    {
+        var execute = Util.Config.MakeRepositories("", "", @"");
+        Assert.IsTrue(execute, "<ERROR>");
+    }
+
+    [TestCase, Order(3)]
+    public void StartDb()
+    {
+        Util.Config.Init();
+        Unit = UnitOfWork.Make(Util.Config.KEY);
+
+        /**/
+        var collection = Unit.Query<Entidade>().ToList();
+        Assert.IsTrue(1==1, "<ERROR>");
+    }
 }
 ```
 ## Histórico
