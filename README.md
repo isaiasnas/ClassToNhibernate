@@ -25,18 +25,8 @@ internal class ConfigTable
 internal static class MapTables
 {
     static internal IList<ConfigTable> Tables = new List<ConfigTable> {
-        new ConfigTable("Filho","ProdutoVenda",true),
-        new ConfigTable("EntIt","ItemEntrega",true),
-        new ConfigTable("ElEnt","ElaboracaoEntrega",true),
-        new ConfigTable("Depos","Empresa",true),
-        new ConfigTable("PdVen","PedidoVenda",true),
-        new ConfigTable("Clien","Cliente",true),
-        new ConfigTable("EndCl","EnderecoCliente",true),
-        new ConfigTable("PdIte","ItemPedido",true),
-        new ConfigTable("Produ","Produto",true),
-        new ConfigTable("tbConta","Conta",true),
-        new ConfigTable("Roman","Romaneio"),
-        new ConfigTable("Motor","Motororista")
+        new ConfigTable("","",true),
+        new ConfigTable("","")
     }
 }
 ```
