@@ -196,14 +196,14 @@ public class InitTeste
     [TestCase, Order(1)]
     public void CriacaoDeEntidades()
     {
-        var execute = Util.Config.MakeEntities("","");
+        var execute = Config.MakeEntities("","");
         Assert.IsTrue(execute, "<ERROR>");
     }
 
-    [TestCase,Order(2)]
+    [TestCase, Order(2)]
     public void CriacaoDeRepositorio()
     {
-        var execute = Util.Config.MakeRepositories("", "", @"");
+        var execute = Config.MakeRepositories("", "", @"");
         Assert.IsTrue(execute, "<ERROR>");
     }
 
@@ -211,7 +211,7 @@ public class InitTeste
     public void StartDb()
     {
         Util.Config.Init();
-        Unit = UnitOfWork.Make(Util.Config.KEY);
+        Unit = UnitOfWork.Make(Config.KEY);
 
         /**/
         var collection = Unit.Query<Entidade>().ToList();
